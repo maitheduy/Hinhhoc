@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Giao tuyến hai mặt phẳng</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/controls/OrbitControls.js"></script>
+  <style>
+    #canvas-container {
+      width: 600px;
+      height: 600px;
+      border: 1px solid #ccc;
+      background: linear-gradient(#ffffff, #f0f0f0);
+    }
+    .equation-box {
+      font-family: monospace;
+      background: #f9f9f9;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    input[type=range] {
+      width: 2.5cm;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 p-6">
+  <h1 class="text-3xl font-bold text-center mb-6">Giao tuyến của hai mặt phẳng</h1>
+
+  <div class="flex flex-col lg:flex-row gap-6 justify-center">
+    <!-- Controls -->
+    <div class="bg-white p-4 rounded shadow-md space-y-4 lg:w-1/3">
+      <h2 class="text-lg font-semibold text-green-600">Mặt phẳng 1</h2>
+      <div id="eq-plane1" class="equation-box text-green-800 text-center"></div>
+      <div class="grid grid-cols-4 gap-2 items-center">
+        <label>a₁:</label><input id="a1" type="range" min="-5" max="5" value="1" step="0.1"><input id="a1v" type="number" value="1" step="0.1">
+        <label>b₁:</label><input id="b1" type="range" min="-5" max="5" value="1" step="0.1"><input id="b1v" type="number" value="1" step="0.1">
+        <label>c₁:</label><input id="c1" type="range" min="-5" max="5" value="1" step="0.1"><input id="c1v" type="number" value="1" step="0.1">
+        <label>d₁:</label><input id="d1" type="range" min="-5" max="5" value="0" step="0.1"><input id="d1v" type="number" value="0" step="0.1">
+      </div>
+
+      <h2 class="text-lg font-semibold text-red-600 mt-4">Mặt phẳng 2</h2>
+      <div id="eq-plane2" class="equation-box text-red-800 text-center"></div>
+      <div class="grid grid-cols-4 gap-2 items-center">
+        <label>a₂:</label><input id="a2" type="range" min="-5" max="5" value="1" step="0.1"><input id="a2v" type="number" value="1" step="0.1">
+        <label>b₂:</label><input id="b2" type="range" min="-5" max="5" value="1" step="0.1"><input id="b2v" type="number" value="1" step="0.1">
+        <label>c₂:</label><input id="c2" type="range" min="-5" max="5" value="-1" step="0.1"><input id="c2v" type="number" value="-1" step="0.1">
+        <label>d₂:</label><input id="d2" type="range" min="-5" max="5" value="0" step="0.1"><input id="d2v" type="number" value="0" step="0.1">
+      </div>
+
+      <div class="mt-4 equation-box text-center text-blue-800">
+        <span class="font-semibold">Phương trình giao tuyến:</span><br>
+        <span id="equation"></span>
+      </div>
+
+      <div id="angle-display" class="mt-4 text-center text-indigo-700 font-medium"></div>
+    </div>
+
+    <!-- Canvas -->
+    <div id="canvas-container">
+      <canvas id="attractorCanvas" width="600" height="600"></canvas>
+    </div>
+  </div>
+
+  <!-- Lý thuyết -->
+  <div class="mt-12 max-w-4xl mx-auto bg-white border rounded shadow p-6 overflow-x-auto">
+    <h2 class="text-xl font-bold mb-4 text-blue-700">Phương pháp tìm giao tuyến của hai mặt phẳng</h2>
+    <ol class="list-decimal list-inside space-y-4 text-gray-800">
+      <li><strong>Bước 1:</strong> Xác định vector pháp tuyến:
+        <div class="ml-6">
+          \[
+          \vec{n}_1 = \begin{pmatrix} a_1 \\ b_1 \\ c_1 \end{pmatrix}, \quad
+          \vec{n}_2 = \begin{pmatrix} a_2 \\ b_2 \\ c_2 \end{pmatrix}
+          \]
+        </div>
+      </li>
+      <li><strong>Bước 2:</strong> Tính tích có hướng:
+        <div class="ml-6">
+          \[
+          \vec{d} = \vec{n}_1 \times \vec{n}_2 =
+          \begin{vmatrix}
+          \mathbf{i} & \mathbf{j} & \mathbf{k} \\
+          a_1 & b_1 & c_1 \\
+          a_2 & b_2 & c_2
+          \end{vmatrix}
+          \]
+        </div>
+      </li>
+      <li><strong>Bước 3:</strong> Giải hệ tìm điểm chung:
+        <div class="ml-6">
+          \[
+          \begin{cases}
+          a_1x + b_1y + c_1z = -d_1 \\
+          a_2x + b_2y + c_2z = -d_2
+          \end{cases}
+          \]
+        </div>
+      </li>
+      <li><strong>Bước 4:</strong> Viết phương trình tham số:
+        <div class="ml-6">
+          \[
+          \begin{cases}
+          x = x_0 + d_x t \\
+          y = y_0 + d_y t \\
+          z = z_0 + d_z t
+          \end{cases}, \quad t \in \mathbb{R}
+          \]
+        </div>
+      </li>
+    </ol>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("attractorCanvas");
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setSize(600, 600);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.update();
+
+    let objects = [];
+
+    function getThemeColors() {
+      const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      return {
+        background: isDark ? 0x1e1e1e : 0xf0f0f0,
+        plane1: isDark ? 0x44ff44 : 0x007700,
+        plane2: isDark ? 0xff4444 : 0x770000,
+        grid: isDark ? 0x888888 : 0xcccccc
+      };
+    }
+
+    function getValue(id) {
+      return parseFloat(document.getElementById(id).value);
+    }
+
+    function syncSliders() {
+      const ids = ['a1','b1','c1','d1','a2','b2','c2','d2'];
+      ids.forEach(id => {
+        const slider = document.getElementById(id);
+        const number = document.getElementById(id + 'v');
+        slider.addEventListener('input', () => { number.value = slider.value; render(); });
+        number.addEventListener('input', () => { slider.value = number.value; render(); });
+      });
+    }
+
+    function createPlane(a, b, c, d, color) {
+      const geometry = new THREE.PlaneGeometry(10, 10);
+      const material = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide, transparent: true, opacity: 0.6 });
+      const mesh = new THREE.Mesh(geometry, material);
+      const normal = new THREE.Vector3(a, b, c).normalize();
+      const point = normal.clone().multiplyScalar(-d / normal.lengthSq());
+      mesh.position.copy(point);
+      mesh.lookAt(point.clone().add(normal));
+      return mesh;
+    }
+
+    function updatePlaneEquations(a1, b1, c1, d1, a2, b2, c2, d2) {
+      const eq1 = `\\(${a1.toFixed(1)}x ${b1 >= 0 ? '+' : '-'} ${Math.abs(b1).toFixed(1)}y ${c1 >= 0 ? '+' : '-'} ${Math.abs(c1).toFixed(1)}z ${d1 >= 0 ? '+' : '-'} ${Math.abs(d1).toFixed(1)} = 0\\)`;
+      const eq2 = `\\(${a2.toFixed(1)}x ${b2 >= 0 ? '+' : '-'} ${Math.abs(b2).toFixed(1)}y ${c2 >= 0 ? '+' : '-'} ${Math.abs(c2).toFixed(1)}z ${d2 >= 0 ? '+' : '-'} ${Math.abs(d2).toFixed(1)} = 0\\)`;
+      document.getElementById("eq-plane1").innerHTML = eq1;
+      document.getElementById("eq-plane2").innerHTML = eq2;
+      MathJax.typeset();
+    }
+
+    function updateAngleBetweenPlanes(n1, n2) {
+      const dot = n1[0]*n2[0] + n1[1]*n2[1] + n1[2]*n2[2];
+      const mag1 = Math.sqrt(n1[0]**2 + n1[1]**2 + n1[2]**2);
+      const mag2 = Math.sqrt(n2[0]**2 + n2[1]**2 + n2[2]**2);
+      const cosTheta = dot / (mag1 * mag2);
+      const angleRad = Math.acos(Math.max(-1, Math.min(1, cosTheta)));
+      const angleDeg = angleRad * 180 / Math.PI;
+      const text = angleDeg.toFixed(2) + "°";
+      const description = angleDeg > 89.9 && angleDeg < 90.1 ? "(vuông góc)" : angleDeg < 90 ? "(nhọn)" : "(tù)";
+      document.getElementById("angle-display").innerHTML = `Góc giữa hai mặt phẳng: <strong>${text}</strong> ${description}`;
+    }
+
+    function drawIntersection(n1, d1, n2, d2) {
+      const cross = new THREE.Vector3().crossVectors(new THREE.Vector3(...n1), new THREE.Vector3(...n2));
+      const eqBox = document.getElementById('equation');
+      if (cross.length() < 1e-6) {
+        eqBox.innerHTML = '\\[ \\text{Hai mặt phẳng song song hoặc trùng nhau} \\]';
+        MathJax.typeset(); return;
+      }
+      let point = [0, 0, 0];
+      try {
+        const A = [[n1[1], n1[2]], [n2[1], n2[2]]];
+        const B = [-d1, -d2];
+        const sol = math.lusolve(A, B);
+        point = [0, sol[0][0], sol[1][0]];
+      } catch {}
+      const eq = `\\begin{cases}
+x = ${point[0].toFixed(2)} + (${cross.x.toFixed(2)})t \\\\
+y = ${point[1].toFixed(2)} + (${cross.y.toFixed(2)})t \\\\
+z = ${point[2].toFixed(2)} + (${cross.z.toFixed(2)})t
+\\end{cases}`;
+      eqBox.innerHTML = `\\[ ${eq} \\]`;
+      MathJax.typeset();
+    }
+
+    function render() {
+      objects.forEach(obj => scene.remove(obj));
+      objects = [];
+
+      const a1 = getValue('a1'), b1 = getValue('b1'), c1 = getValue('c1'), d1 = getValue('d1');
+      const a2 = getValue('a2'), b2 = getValue('b2'), c2 = getValue('c2'), d2 = getValue('d2');
+
+      const theme = getThemeColors();
+      renderer.setClearColor(theme.background);
+
+      const p1 = createPlane(a1, b1, c1, d1, theme.plane1);
+      const p2 = createPlane(a2, b2, c2, d2, theme.plane2);
+      scene.add(p1, p2);
+      objects.push(p1, p2);
+
+      updatePlaneEquations(a1, b1, c1, d1, a2, b2, c2, d2);
+      drawIntersection([a1, b1, c1], d1, [a2, b2, c2], d2);
+      updateAngleBetweenPlanes([a1, b1, c1], [a2, b2, c2]);
+    }
+
+    syncSliders();
+    render();
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>
